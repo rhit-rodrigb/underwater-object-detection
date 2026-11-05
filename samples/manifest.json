@@ -1,0 +1,152 @@
+[
+  {
+    "id": "01_success",
+    "label": "01 · Success",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/01_success/original.jpg",
+    "groundTruthImage": "samples/images/01_success/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/01_success/baseline.jpg",
+      "builtin": "samples/images/01_success/builtin.jpg",
+      "weighted": "samples/images/01_success/weighted.jpg",
+      "offline": "samples/images/01_success/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "02_success",
+    "label": "02 · Success",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/02_success/original.jpg",
+    "groundTruthImage": "samples/images/02_success/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/02_success/baseline.jpg",
+      "builtin": "samples/images/02_success/builtin.jpg",
+      "weighted": "samples/images/02_success/weighted.jpg",
+      "offline": "samples/images/02_success/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "03_success",
+    "label": "03 · Success",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/03_success/original.jpg",
+    "groundTruthImage": "samples/images/03_success/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/03_success/baseline.jpg",
+      "builtin": "samples/images/03_success/builtin.jpg",
+      "weighted": "samples/images/03_success/weighted.jpg",
+      "offline": "samples/images/03_success/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "04_failure",
+    "label": "04 · Failure",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/04_failure/original.jpg",
+    "groundTruthImage": "samples/images/04_failure/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/04_failure/baseline.jpg",
+      "builtin": "samples/images/04_failure/builtin.jpg",
+      "weighted": "samples/images/04_failure/weighted.jpg",
+      "offline": "samples/images/04_failure/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "05_failure",
+    "label": "05 · Failure",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/05_failure/original.jpg",
+    "groundTruthImage": "samples/images/05_failure/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/05_failure/baseline.jpg",
+      "builtin": "samples/images/05_failure/builtin.jpg",
+      "weighted": "samples/images/05_failure/weighted.jpg",
+      "offline": "samples/images/05_failure/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "06_failure",
+    "label": "06 · Failure",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/06_failure/original.jpg",
+    "groundTruthImage": "samples/images/06_failure/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/06_failure/baseline.jpg",
+      "builtin": "samples/images/06_failure/builtin.jpg",
+      "weighted": "samples/images/06_failure/weighted.jpg",
+      "offline": "samples/images/06_failure/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "07_intermediate",
+    "label": "07 · Intermediate",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/07_intermediate/original.jpg",
+    "groundTruthImage": "samples/images/07_intermediate/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/07_intermediate/baseline.jpg",
+      "builtin": "samples/images/07_intermediate/builtin.jpg",
+      "weighted": "samples/images/07_intermediate/weighted.jpg",
+      "offline": "samples/images/07_intermediate/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "08_intermediate",
+    "label": "08 · Intermediate",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/08_intermediate/original.jpg",
+    "groundTruthImage": "samples/images/08_intermediate/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/08_intermediate/baseline.jpg",
+      "builtin": "samples/images/08_intermediate/builtin.jpg",
+      "weighted": "samples/images/08_intermediate/weighted.jpg",
+      "offline": "samples/images/08_intermediate/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "09_disagreement",
+    "label": "09 · Model disagreement",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/09_disagreement/original.jpg",
+    "groundTruthImage": "samples/images/09_disagreement/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/09_disagreement/baseline.jpg",
+      "builtin": "samples/images/09_disagreement/builtin.jpg",
+      "weighted": "samples/images/09_disagreement/weighted.jpg",
+      "offline": "samples/images/09_disagreement/offline.jpg"
+    },
+    "annotations": []
+  },
+  {
+    "id": "10_disagreement",
+    "label": "10 · Model disagreement",
+    "dataset": "instance",
+    "split": "curated",
+    "image": "samples/images/10_disagreement/original.jpg",
+    "groundTruthImage": "samples/images/10_disagreement/ground_truth.jpg",
+    "previews": {
+      "baseline": "samples/images/10_disagreement/baseline.jpg",
+      "builtin": "samples/images/10_disagreement/builtin.jpg",
+      "weighted": "samples/images/10_disagreement/weighted.jpg",
+      "offline": "samples/images/10_disagreement/offline.jpg"
+    },
+    "annotations": []
+  }
+]
