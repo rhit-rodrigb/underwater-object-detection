@@ -144,19 +144,24 @@ function groundTruthBoxes(sample) {
   }));
 }
 
-function setCurrentImage(image, sample = null) {
+function setCurrentImage(image, sample = null, groundTruthImage = null) {
   currentImage = image;
   currentSample = sample;
   ui.inputPlaceholder.hidden = true;
   ui.predictionPlaceholder.hidden = true;
-  drawCanvas(ui.inputCanvas, image, groundTruthBoxes(sample));
+  drawCanvas(ui.inputCanvas, groundTruthImage || image,
+    groundTruthImage ? [] : groundTruthBoxes(sample));
   drawCanvas(ui.predictionCanvas, image);
-  ui.inputCaption.textContent = sample ? "Ground truth (blue)" : "Uploaded image";
+  ui.inputCaption.textContent = groundTruthImage
+    ? "Ground truth (team-provided)"
+    : sample?.annotations?.length ? "Ground truth (blue)" : "Uploaded image";
   ui.outputCaption.textContent = "Ready to detect";
   ui.resultModeTag.textContent = sample ? "DATASET IMAGE" : "PERSONAL UPLOAD";
   ui.run.disabled = false;
   emptyResults();
-  status("Image ready. Click Run detection to load the selected model.");
+  status(sample?.previews
+    ? "Image ready. Click Run detection to view the team's saved result; live inference needs ONNX files."
+    : "Image ready. Click Run detection to load the selected model.");
 }
 
 function clearImage(message = "Choose an image to begin.") {
@@ -208,7 +213,8 @@ async function useUploadedFile(file) {
 }
 
 function matchingSamples() {
-  return samples.filter(s => s.dataset === ui.dataset.value && s.split === "val");
+  return samples.filter(s => s.dataset === ui.dataset.value &&
+    (s.split === "val" || s.split === "curated"));
 }
 
 function refreshSamples() {
@@ -220,7 +226,10 @@ function refreshSamples() {
     opt.textContent = "No samples added yet";
     ui.sample.append(opt);
     ui.sample.disabled = true;
-    if (currentSource === "dataset") clearImage("Add example images with tools/prepare_examples.py first.");
+    if (currentSource === "dataset") clearImage(
+      ui.dataset.value === "material"
+        ? "No Material examples were provided yet. Select Instance or add Material samples."
+        : "Add example images with tools/prepare_examples.py first.");
   } else {
     ui.sample.disabled = false;
     for (const sample of chosen) {
@@ -233,15 +242,22 @@ function refreshSamples() {
   }
   ui.datasetHint.textContent = ui.dataset.value === "material"
     ? "The current models predict Instance labels. Material ground truth cannot be used to grade them."
-    : "Predictions will be compared to the annotations supplied with the selected sample.";
+    : "Curated examples include saved predictions. Per-object grading requires original COCO annotations.";
 }
 
 async function chooseSample() {
   const sample = matchingSamples().find(s => s.id === ui.sample.value);
   if (!sample) return;
   try {
-    const image = await loadImage(new URL(sample.image, document.baseURI).href);
-    if (currentSource === "dataset" && sample.id === ui.sample.value) setCurrentImage(image, sample);
+    const [image, reference] = await Promise.all([
+      loadImage(new URL(sample.image, document.baseURI).href),
+      sample.groundTruthImage
+        ? loadImage(new URL(sample.groundTruthImage, document.baseURI).href)
+        : Promise.resolve(null),
+    ]);
+    if (currentSource === "dataset" && sample.id === ui.sample.value) {
+      setCurrentImage(image, sample, reference);
+    }
   } catch (error) {
     status(`Sample unavailable: ${error.message}`, "error");
   }
@@ -367,7 +383,8 @@ function decodeOutput(output, threshold, transform) {
 }
 
 function evaluateDetections(detections, sample) {
-  const comparisonEnabled = sample?.dataset === "instance";
+  const comparisonEnabled = sample?.dataset === "instance" &&
+    Array.isArray(sample.annotations) && sample.annotations.length > 0;
   if (!comparisonEnabled) {
     const rows = detections.map(d => ({
       predicted:d.className, actual:null, confidence:d.confidence, iou:null,
@@ -417,19 +434,37 @@ function evaluateDetections(detections, sample) {
 }
 
 async function getModelSession(key) {
-  if (!window.ort) throw new Error("ONNX Runtime did not load. Check your internet connection or script blocker.");
   if (loadedModel?.key === key) return loadedModel.session;
   const url = new URL(MODEL_FILES[key], document.baseURI).href;
   const response = await fetch(url, { method:"HEAD" });
   if (!response.ok) throw new Error(
     `Model file is missing (${MODEL_FILES[key]}). Export the team's trained ${key} checkpoint to ONNX first.`
   );
+  if (!window.ort) throw new Error("ONNX Runtime did not load. Check your internet connection or script blocker.");
   ort.env.wasm.numThreads = 1;
   ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/";
   const session = await ort.InferenceSession.create(url, { executionProviders:["wasm"], graphOptimizationLevel:"all" });
   if (loadedModel?.session?.release) await loadedModel.session.release();
   loadedModel = { key, session };
   return session;
+}
+
+async function showSavedPrediction(sample, modelKey) {
+  const previewPath = sample?.previews?.[modelKey];
+  if (!previewPath) return false;
+  const annotated = await loadImage(new URL(previewPath, document.baseURI).href);
+  if (currentSample !== sample || ui.model.value !== modelKey) return false;
+  drawCanvas(ui.predictionCanvas, annotated);
+  ui.outputCaption.textContent = "Saved prediction (provided by team)";
+  ui.resultModeTag.textContent = "SAVED RESULT";
+  emptyResults(
+    "This is a saved prediction image, not a new model run. The ZIP contains annotated JPGs but no machine-readable per-object detections, so a correctness table cannot be calculated yet."
+  );
+  status(
+    "Showing the team's saved prediction. Confidence-slider changes do not affect saved JPGs; live inference needs the ONNX file.",
+    "success"
+  );
+  return true;
 }
 
 async function runDetection() {
@@ -439,7 +474,15 @@ async function runDetection() {
   ui.run.firstChild.textContent = "Running model ";
   status("Loading model and running object detection. First load may take a while…");
   try {
-    const session = await getModelSession(ui.model.value);
+    const selectedModel = ui.model.value;
+    let session;
+    try {
+      session = await getModelSession(selectedModel);
+    } catch (error) {
+      if (String(error.message).includes("Model file is missing") &&
+          await showSavedPrediction(currentSample, selectedModel)) return;
+      throw error;
+    }
     const input = prepareInput(currentImage);
     const output = await session.run({ [session.inputNames[0]]:input.tensor });
     const detections = decodeOutput(output[session.outputNames[0]], Number(ui.confidence.value)/100, input);
@@ -480,7 +523,14 @@ for (const input of ui.source) input.addEventListener("change", () => {
 ui.dataset.addEventListener("change",refreshSamples);
 ui.sample.addEventListener("change",() => void chooseSample());
 ui.confidence.addEventListener("input", () => ui.confidenceValue.textContent = `${ui.confidence.value}%`);
-ui.model.addEventListener("change", () => { if (currentImage) status("Model changed. Run detection to compare its output."); });
+ui.model.addEventListener("change", () => {
+  if (!currentImage) return;
+  drawCanvas(ui.predictionCanvas, currentImage);
+  ui.outputCaption.textContent = "Awaiting selected model";
+  ui.resultModeTag.textContent = "MODEL CHANGED";
+  emptyResults();
+  status("Model changed. Click Run detection to view its result.");
+});
 ui.run.addEventListener("click",() => void runDetection());
 
 void loadSamples();

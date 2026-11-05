@@ -41,7 +41,7 @@
           <span class="section-index">01 / THE LAB</span>
           <h2 id="demo-title">Explore a prediction</h2>
         </div>
-        <p>Choose a trained model and an image. The model runs in your browser once its ONNX file has been added.</p>
+        <p>Choose a model and an image. Explore saved results from the team's examples now, or run live inference after adding ONNX weights.</p>
       </div>
 
       <div class="workspace">
@@ -83,7 +83,7 @@
               <option value="instance">TrashCan-Instance</option>
               <option value="material">TrashCan-Material</option>
             </select>
-            <label for="sampleSelect" class="nested-label">Validation image</label>
+            <label for="sampleSelect" class="nested-label">Example image</label>
             <select id="sampleSelect"><option value="">Loading examples…</option></select>
             <small id="datasetHint">Examples are loaded from <code>samples/manifest.json</code>.</small>
           </div>
@@ -122,7 +122,7 @@
               <tbody id="resultsBody"><tr><td colspan="6" class="empty-row">Run detection to see per-object results.</td></tr></tbody>
             </table>
           </div>
-          <p class="table-note">For dataset images, "correct" means the predicted class matches a ground-truth object with bounding-box IoU ≥ 0.50. Personal uploads have no known ground truth.</p>
+          <p class="table-note">When original COCO annotations and live model outputs are available, "correct" means the predicted class matches a ground-truth object with box IoU ≥ 0.50. For the supplied saved JPG results, compare the two images visually; individual correctness scores cannot be reconstructed from the JPGs. Personal uploads have no known ground truth.</p>
         </div>
       </div>
     </section>
