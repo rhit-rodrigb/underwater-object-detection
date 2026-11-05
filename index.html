@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Submerged: explore underwater object detection with models trained on the TrashCan dataset.">
+  <title>Submerged | Underwater Object Detection</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="ocean-glow" aria-hidden="true"></div>
+  <header class="site-header">
+    <a href="./index.html" class="brand" aria-label="Submerged home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>SUBMERGED</span>
+    </a>
+    <nav aria-label="Page navigation">
+      <a href="#demo">Try the model</a>
+      <a href="#about">About the project</a>
+    </nav>
+    <span class="top-label">Rose-Hulman · Deep Learning</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow"><span class="pulse-dot"></span> INTERACTIVE COMPUTER VISION DEMO</div>
+      <h1>See what lies <em>beneath.</em></h1>
+      <p>Explore how deep-learning models identify trash, marine life, and other objects in challenging underwater footage.</p>
+      <div class="hero-facts" aria-label="Project facts">
+        <div><strong>7,212</strong><span>Underwater images</span></div>
+        <div><strong>22</strong><span>Instance categories</span></div>
+        <div><strong>4</strong><span>YOLO model variants</span></div>
+      </div>
+    </section>
+
+    <section class="demo-section" id="demo" aria-labelledby="demo-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-index">01 / THE LAB</span>
+          <h2 id="demo-title">Explore a prediction</h2>
+        </div>
+        <p>Choose a trained model and an image. The model runs in your browser once its ONNX file has been added.</p>
+      </div>
+
+      <div class="workspace">
+        <aside class="control-panel" aria-labelledby="settings-title">
+          <div class="panel-heading"><span class="panel-icon">⚙</span><h3 id="settings-title">Configuration</h3></div>
+
+          <div class="field">
+            <label for="modelSelect">Model</label>
+            <select id="modelSelect">
+              <option value="baseline">YOLO11s · Baseline</option>
+              <option value="builtin">YOLO11s · Built-in augmentation</option>
+              <option value="weighted">YOLO11s · Class-weighted</option>
+              <option value="offline">YOLO11s · Offline augmentation</option>
+            </select>
+            <small>All four models use TrashCan-Instance's 22 classes.</small>
+          </div>
+
+          <fieldset class="field source-field">
+            <legend>Image source</legend>
+            <div class="choice-pills" role="group" aria-label="Image source">
+              <label><input type="radio" name="source" value="upload" checked><span>Upload image</span></label>
+              <label><input type="radio" name="source" value="dataset"><span>Dataset sample</span></label>
+            </div>
+          </fieldset>
+
+          <div id="uploadControls" class="field">
+            <label for="imageUpload">Your image</label>
+            <label class="upload-zone" id="uploadZone" for="imageUpload">
+              <span class="upload-icon" aria-hidden="true">↑</span>
+              <strong>Choose an underwater image</strong>
+              <span>JPG, PNG, or WebP · or drag and drop</span>
+            </label>
+            <input type="file" id="imageUpload" accept="image/jpeg,image/png,image/webp">
+          </div>
+
+          <div id="datasetControls" class="field" hidden>
+            <label for="datasetSelect">Dataset version</label>
+            <select id="datasetSelect">
+              <option value="instance">TrashCan-Instance</option>
+              <option value="material">TrashCan-Material</option>
+            </select>
+            <label for="sampleSelect" class="nested-label">Validation image</label>
+            <select id="sampleSelect"><option value="">Loading examples…</option></select>
+            <small id="datasetHint">Examples are loaded from <code>samples/manifest.json</code>.</small>
+          </div>
+
+          <div class="field slider-field">
+            <div class="label-row"><label for="confidenceSlider">Confidence threshold</label><output id="confidenceValue">25%</output></div>
+            <input id="confidenceSlider" type="range" min="5" max="90" step="5" value="25">
+            <div class="range-labels"><span>More detections</span><span>Stricter</span></div>
+          </div>
+
+          <button id="runButton" class="primary-button" type="button" disabled>Run detection <span aria-hidden="true">↗</span></button>
+          <div class="status" id="status" role="status" aria-live="polite">Select an image to begin.</div>
+          <p class="privacy-note">Uploaded images are processed in your browser. They are not sent to a prediction server by this demo.</p>
+        </aside>
+
+        <div class="results-panel">
+          <div class="panel-heading result-header">
+            <div><span class="panel-icon">◎</span><h3>Detection results</h3></div>
+            <span class="tiny-tag" id="resultModeTag">WAITING FOR IMAGE</span>
+          </div>
+          <div class="image-grid">
+            <div class="image-card">
+              <div class="image-caption"><strong>Input image</strong><span id="inputCaption">Original</span></div>
+              <div class="canvas-stage"><canvas id="inputCanvas" width="640" height="430" aria-label="Input image with available ground-truth boxes"></canvas><p id="inputPlaceholder">Your selected image will appear here.</p></div>
+            </div>
+            <div class="image-card">
+              <div class="image-caption"><strong>Model prediction</strong><span id="outputCaption">Awaiting inference</span></div>
+              <div class="canvas-stage"><canvas id="predictionCanvas" width="640" height="430" aria-label="Annotated object detection image"></canvas><p id="predictionPlaceholder">Detected objects and boxes will appear here.</p></div>
+            </div>
+          </div>
+
+          <div class="table-header"><h4>Object breakdown</h4><span id="objectCount">0 predictions</span></div>
+          <div class="table-scroll">
+            <table aria-label="Detection results">
+              <thead><tr><th>#</th><th>Predicted object</th><th>Actual object</th><th>Confidence</th><th>IoU</th><th>Result</th></tr></thead>
+              <tbody id="resultsBody"><tr><td colspan="6" class="empty-row">Run detection to see per-object results.</td></tr></tbody>
+            </table>
+          </div>
+          <p class="table-note">For dataset images, "correct" means the predicted class matches a ground-truth object with bounding-box IoU ≥ 0.50. Personal uploads have no known ground truth.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-section" id="about">
+      <div><span class="section-index">02 / ABOUT</span><h2>Built to explore underwater vision.</h2></div>
+      <div class="about-copy">
+        <p>The TrashCan dataset contains annotated frames from remotely operated vehicles exploring the seafloor. Submerged investigates how transfer learning and image augmentation affect the detection of trash and marine life.</p>
+        <p>This demonstration uses the <strong>Instance</strong> labeling scheme (22 object categories). Bounding-box predictions may be inaccurate, especially for rare classes or low-visibility scenes. The site is a student research demonstration, not an operational monitoring system.</p>
+        <p><strong>Project team:</strong> Steven Johnson, Carter Latham, Brian Rodriguez, and Jacob Scheibe · Rose-Hulman Institute of Technology.</p>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><span>SUBMERGED · UNDERWATER OBJECT DETECTION</span><a href="https://github.com/rhit-rodrigb/underwater-object-detection" target="_blank" rel="noopener noreferrer">Project source ↗</a></footer>
+</body>
+</html>
